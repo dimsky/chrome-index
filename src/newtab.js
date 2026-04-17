@@ -97,9 +97,13 @@ function filterTabs(tabs, query) {
 }
 
 function setupListeners() {
+  let searchDebounce;
   els.searchInput.addEventListener('input', (e) => {
-    state.searchQuery = e.target.value;
-    render();
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      state.searchQuery = e.target.value;
+      render();
+    }, 150);
   });
 
   els.groupTabs.addEventListener('click', (e) => {
