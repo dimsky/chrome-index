@@ -44,6 +44,12 @@ const els = {
   quickLinks: document.getElementById('quick-links'),
 };
 
+const manualGroupBtn = document.createElement('button');
+manualGroupBtn.id = 'btn-manage-groups';
+manualGroupBtn.textContent = '管理分组';
+manualGroupBtn.className = 'hidden';
+els.groupTabs.insertAdjacentElement('afterend', manualGroupBtn);
+
 async function init() {
   state.config = await loadConfig();
   await refreshData();
@@ -74,10 +80,11 @@ function render() {
     onPin: handlePin,
     onMute: handleMute,
     onSelect: handleSelect,
+    onMoveToGroup: state.dimension === 'manual' ? handleMoveToGroup : null,
     selectedTabIds: state.selectedTabIds,
   });
 
-  updateActiveTab(els.groupTabs.querySelectorAll('button'), state.dimension);
+  updateGroupTabsUI();
 }
 
 function filterTabs(tabs, query) {
@@ -105,6 +112,14 @@ function setupListeners() {
 
   subscribeTabChanges(() => {
     refreshData();
+  });
+
+  manualGroupBtn.addEventListener('click', () => {
+    const name = prompt('新建手动分组名称');
+    if (!name || !name.trim()) return;
+    const id = `mg-${Date.now()}`;
+    state.config.manualGroups = [...(state.config.manualGroups || []), { id, name: name.trim(), tabIds: [] }];
+    saveConfig(state.config).then(refreshData);
   });
 }
 
@@ -176,6 +191,33 @@ function handleSelect(tabId, meta, shift) {
     state.selectedTabIds.add(tabId);
     render();
   }
+}
+
+async function handleMoveToGroup(groupName) {
+  if (state.selectedTabIds.size === 0) {
+    alert('请先选择要移动的标签页');
+    return;
+  }
+  const ids = Array.from(state.selectedTabIds);
+  const target = state.config.manualGroups.find((g) => g.name === groupName);
+  if (!target) return;
+
+  // Remove from all other manual groups first
+  for (const g of state.config.manualGroups) {
+    g.tabIds = (g.tabIds || []).filter((id) => !ids.includes(id));
+  }
+  target.tabIds = [...new Set([...(target.tabIds || []), ...ids])];
+
+  await saveConfig(state.config);
+  state.selectedTabIds.clear();
+  await refreshData();
+}
+
+function updateGroupTabsUI() {
+  for (const btn of els.groupTabs.querySelectorAll('button')) {
+    btn.classList.toggle('active', btn.dataset.dimension === state.dimension);
+  }
+  manualGroupBtn.classList.toggle('hidden', state.dimension !== 'manual');
 }
 
 function renderQuickLinksBar() {

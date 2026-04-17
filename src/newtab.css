@@ -199,3 +199,22 @@ body {
 }
 #batch-close { background: var(--danger); color: #fff; }
 #batch-cancel { background: var(--hover-bg); color: var(--fg); }
+#btn-manage-groups {
+  margin: 8px 16px 0;
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+#btn-manage-groups.hidden { display: none; }
+.group-actions { display: flex; gap: 8px; align-items: center; }
+.btn-move-in {
+  font-size: 11px;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}

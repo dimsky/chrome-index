@@ -1,6 +1,6 @@
 import { formatDuration } from './lib/time-format.js';
 
-export function renderGroups(container, groups, { onActivate, onClose, onPin, onMute, onSelect, selectedTabIds = new Set() } = {}) {
+export function renderGroups(container, groups, { onActivate, onClose, onPin, onMute, onSelect, onMoveToGroup, selectedTabIds = new Set() } = {}) {
   container.innerHTML = '';
   for (const key of Object.keys(groups)) {
     const group = groups[key];
@@ -10,13 +10,25 @@ export function renderGroups(container, groups, { onActivate, onClose, onPin, on
 
     const header = document.createElement('div');
     header.className = 'group-header';
+    const moveInBtn = onMoveToGroup
+      ? `<button class="btn-move-in" title="将选中的标签移入该组">移入</button>`
+      : '';
     header.innerHTML = `
       <div class="group-title">
         <span class="group-name">${escapeHtml(group.name)}</span>
         <span class="group-count">${group.tabs.length}</span>
       </div>
-      <button class="btn-close-group" title="关闭整组">关闭全部</button>
+      <div class="group-actions">
+        ${moveInBtn}
+        <button class="btn-close-group" title="关闭整组">关闭全部</button>
+      </div>
     `;
+    if (moveInBtn) {
+      header.querySelector('.btn-move-in').addEventListener('click', (e) => {
+        e.stopPropagation();
+        onMoveToGroup?.(group.name);
+      });
+    }
     header.querySelector('.btn-close-group').addEventListener('click', (e) => {
       e.stopPropagation();
       onClose?.(group.tabs.map((t) => t.id));
