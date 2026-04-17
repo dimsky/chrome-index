@@ -98,7 +98,7 @@ export function setTabCount(el, count) {
   el.textContent = `${count} 个标签`;
 }
 
-export function updateActiveTab(links) {
+export function updateActiveTab(links, dimension) {
   for (const btn of links) {
     btn.classList.toggle('active', btn.dataset.dimension === dimension);
   }
