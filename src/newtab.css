@@ -85,3 +85,91 @@ body {
   align-items: center;
   flex-wrap: wrap;
 }
+.group-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+}
+.group-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.group-name { font-weight: 600; font-size: 14px; }
+.group-count {
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--hover-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.btn-close-group {
+  font-size: 11px;
+  color: var(--danger);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.tab-list {
+  list-style: none;
+  flex: 1;
+  overflow: auto;
+  padding: 4px 0;
+}
+.tab-item {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  position: relative;
+}
+.tab-item:last-child { border-bottom: none; }
+.tab-item:hover { background: var(--hover-bg); }
+.tab-item.active-tab { border-left: 3px solid var(--accent); padding-left: 9px; }
+.tab-item.selected { background: rgba(26, 115, 232, 0.12); }
+.tab-favicon { width: 14px; height: 14px; flex-shrink: 0; }
+.tab-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+.tab-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.tab-item .btn-pin,
+.tab-item .btn-mute,
+.tab-item .btn-close {
+  font-size: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  flex-shrink: 0;
+  padding: 2px 4px;
+}
+.tab-item .btn-close { font-size: 16px; line-height: 1; }
+.tab-item .btn-pin { min-width: 20px; }
+.tab-item .btn-mute { min-width: 20px; }
+.ql-label { font-size: 12px; color: var(--muted); }
+.quick-link {
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--hover-bg);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+.quick-link.add { color: var(--muted); }
