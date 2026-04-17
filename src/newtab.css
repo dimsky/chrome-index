@@ -173,3 +173,29 @@ body {
   user-select: none;
 }
 .quick-link.add { color: var(--muted); }
+.batch-bar {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+}
+.batch-bar span { font-size: 13px; }
+.batch-actions { display: flex; gap: 8px; }
+.batch-actions button {
+  padding: 5px 12px;
+  border-radius: 14px;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+#batch-close { background: var(--danger); color: #fff; }
+#batch-cancel { background: var(--hover-bg); color: var(--fg); }

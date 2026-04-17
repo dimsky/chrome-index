@@ -1,6 +1,6 @@
 import { formatDuration } from './lib/time-format.js';
 
-export function renderGroups(container, groups, { onActivate, onClose, onPin, onMute, selectedTabIds = new Set() } = {}) {
+export function renderGroups(container, groups, { onActivate, onClose, onPin, onMute, onSelect, selectedTabIds = new Set() } = {}) {
   container.innerHTML = '';
   for (const key of Object.keys(groups)) {
     const group = groups[key];
@@ -42,6 +42,11 @@ export function renderGroups(container, groups, { onActivate, onClose, onPin, on
         ${muteBtn}
         <button class="btn-close" title="关闭">×</button>
       `;
+
+      li.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+        onSelect?.(tab.id, e.metaKey || e.ctrlKey, e.shiftKey);
+      });
 
       li.querySelector('.tab-title').addEventListener('click', () => onActivate?.(tab.id, tab.windowId));
       li.querySelector('.btn-close').addEventListener('click', (e) => {

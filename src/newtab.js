@@ -67,11 +67,13 @@ function render() {
   const groups = grouper(filtered, state.config.manualGroups, state.groups);
 
   setTabCount(els.tabCount, state.tabs.length);
+  renderBatchBar();
   renderGroups(els.content, groups, {
     onActivate: handleActivate,
     onClose: handleClose,
     onPin: handlePin,
     onMute: handleMute,
+    onSelect: handleSelect,
     selectedTabIds: state.selectedTabIds,
   });
 
@@ -128,6 +130,52 @@ async function handlePin(tabId, pinned) {
 async function handleMute(tabId, muted) {
   await muteTab(tabId, muted);
   await refreshData();
+}
+
+function renderBatchBar() {
+  let bar = document.getElementById('batch-bar');
+  if (state.selectedTabIds.size === 0) {
+    if (bar) bar.remove();
+    return;
+  }
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'batch-bar';
+    bar.className = 'batch-bar';
+    document.body.insertBefore(bar, els.content);
+  }
+  bar.innerHTML = `
+    <span>已选择 ${state.selectedTabIds.size} 个标签页</span>
+    <div class="batch-actions">
+      <button id="batch-close">批量关闭</button>
+      <button id="batch-cancel">取消</button>
+    </div>
+  `;
+  bar.querySelector('#batch-close').addEventListener('click', () => handleClose(Array.from(state.selectedTabIds)));
+  bar.querySelector('#batch-cancel').addEventListener('click', () => {
+    state.selectedTabIds.clear();
+    render();
+  });
+}
+
+function handleSelect(tabId, meta, shift) {
+  if (!meta && !shift) {
+    state.selectedTabIds.clear();
+    state.selectedTabIds.add(tabId);
+    render();
+    return;
+  }
+  if (meta) {
+    if (state.selectedTabIds.has(tabId)) state.selectedTabIds.delete(tabId);
+    else state.selectedTabIds.add(tabId);
+    render();
+    return;
+  }
+  // Shift range selection is a nice-to-have; for MVP, treat as toggle
+  if (shift) {
+    state.selectedTabIds.add(tabId);
+    render();
+  }
 }
 
 function renderQuickLinksBar() {
