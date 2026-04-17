@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Manager - 新标签页",
+  "version": "1.0.0",
+  "description": "按域名、窗口、时间、分组管理所有标签页",
+  "permissions": ["tabs", "tabGroups", "storage", "activeTab"],
+  "chrome_url_overrides": {
+    "newtab": "src/newtab.html"
+  },
+  "icons": {
+    "128": "src/icons/icon128.png"
+  }
+}

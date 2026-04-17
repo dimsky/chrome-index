@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>标签页管理</title>
+  <link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+  <header class="app-header">
+    <input type="text" id="search-input" placeholder="搜索标签页..." autocomplete="off">
+    <span id="tab-count">0 个标签</span>
+  </header>
+  <nav class="group-tabs" id="group-tabs">
+    <button data-dimension="domain" class="active">域名</button>
+    <button data-dimension="window">窗口</button>
+    <button data-dimension="time">时间</button>
+    <button data-dimension="native">原生分组</button>
+    <button data-dimension="manual">手动分组</button>
+  </nav>
+  <main class="content" id="content"></main>
+  <footer class="quick-links" id="quick-links"></footer>
+  <script type="module" src="newtab.js"></script>
+</body>
+</html>
