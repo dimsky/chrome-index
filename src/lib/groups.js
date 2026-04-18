@@ -1,7 +1,16 @@
 function getHost(url) {
   try {
     if (url.startsWith('chrome://')) return 'Chrome 内置页';
-    return new URL(url).hostname || '其他';
+    const hostname = new URL(url).hostname || '其他';
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) return hostname;
+    const parts = hostname.split('.');
+    if (parts.length <= 2) return hostname;
+    const suffix2 = parts[parts.length - 2];
+    const commonSecondLevel = new Set(['com', 'net', 'org', 'gov', 'edu', 'co', 'ac', 'mil']);
+    if (commonSecondLevel.has(suffix2)) {
+      return parts.slice(-3).join('.');
+    }
+    return parts.slice(-2).join('.');
   } catch {
     return '其他';
   }
@@ -89,7 +98,7 @@ function groupByManualGroups(tabs, manualGroups) {
   return groups;
 }
 
-module.exports = {
+export {
   groupByDomain,
   groupByWindow,
   groupByTime,

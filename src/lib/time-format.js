@@ -12,4 +12,4 @@ function formatDuration(timestamp) {
   return `${days}天`;
 }
 
-module.exports = { formatDuration };
+export { formatDuration };

@@ -18,7 +18,7 @@ function reorderQuickLinks(links, fromIndex, toIndex) {
   return arr;
 }
 
-module.exports = {
+export {
   isValidChromeUrl,
   addQuickLink,
   removeQuickLink,

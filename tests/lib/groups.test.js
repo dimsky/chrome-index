@@ -1,25 +1,26 @@
-const {
+import {
   groupByDomain,
   groupByWindow,
   groupByTime,
   groupByNativeGroups,
   groupByManualGroups,
-} = require('../../src/lib/groups');
+} from '../../src/lib/groups.js';
 
 const makeTab = (id, url, windowId = 1, groupId = -1, lastAccessed = Date.now()) => ({
   id, url, windowId, groupId, lastAccessedTime: lastAccessed, title: `Tab ${id}`,
 });
 
 describe('groupByDomain', () => {
-  test('groups tabs by hostname', () => {
+  test('groups tabs by top-level domain', () => {
     const tabs = [
       makeTab(1, 'https://github.com/a'),
       makeTab(2, 'https://github.com/b'),
       makeTab(3, 'https://docs.google.com/x'),
     ];
     const result = groupByDomain(tabs);
-    expect(Object.keys(result)).toEqual(['github.com', 'docs.google.com']);
+    expect(Object.keys(result)).toEqual(['github.com', 'google.com']);
     expect(result['github.com'].tabs.map((t) => t.id)).toEqual([1, 2]);
+    expect(result['google.com'].tabs.map((t) => t.id)).toEqual([3]);
   });
 
   test('handles chrome:// URLs in special group', () => {

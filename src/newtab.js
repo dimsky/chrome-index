@@ -6,6 +6,7 @@ import {
   closeTabs,
   pinTab,
   muteTab,
+  openUrl,
   subscribeTabChanges,
 } from './tabs-api.js';
 import {
@@ -36,6 +37,42 @@ let state = {
   selectedTabIds: new Set(),
 };
 
+function toGroupColumns(groupsObj, dim, config) {
+  const allGroups = Object.keys(groupsObj).map((key) => ({ key, ...groupsObj[key] }));
+  const groupMap = new Map(allGroups.map((g) => [g.key, g]));
+  let columns = config.groupColumns?.[dim];
+
+  if (!columns) {
+    const total = allGroups.length;
+    const perCol = Math.ceil(total / 4) || 1;
+    columns = [[], [], [], []];
+    for (let i = 0; i < total; i++) {
+      const colIndex = Math.min(Math.floor(i / perCol), 3);
+      columns[colIndex].push(allGroups[i].key);
+    }
+    config.groupColumns = config.groupColumns || {};
+    config.groupColumns[dim] = columns;
+  }
+
+  const assigned = new Set(columns.flat());
+  for (const g of allGroups) {
+    if (!assigned.has(g.key)) {
+      const minCol = columns.reduce((min, col, i) =>
+        col.length < columns[min].length ? i : min, 0);
+      columns[minCol].push(g.key);
+    }
+  }
+
+  const validKeys = new Set(allGroups.map((g) => g.key));
+  for (let c = 0; c < 4; c++) {
+    columns[c] = columns[c].filter((k) => validKeys.has(k));
+  }
+
+  return columns.map((keys) =>
+    keys.map((k) => groupMap.get(k)).filter(Boolean)
+  );
+}
+
 const els = {
   content: document.getElementById('content'),
   searchInput: document.getElementById('search-input'),
@@ -52,9 +89,79 @@ els.groupTabs.insertAdjacentElement('afterend', manualGroupBtn);
 
 async function init() {
   state.config = await loadConfig();
+  state.config.groupColumns = state.config.groupColumns || {};
+  state.config.pinnedGroups = state.config.pinnedGroups || {};
+  applyBgImage();
   await refreshData();
   setupListeners();
   renderQuickLinksBar();
+  renderBgButton();
+  setTimeout(() => {
+    els.searchInput.focus();
+    els.searchInput.select();
+  }, 300);
+}
+
+function applyBgImage() {
+  const url = state.config.bgImage;
+  if (url) {
+    document.body.style.backgroundImage = `url(${url})`;
+  } else {
+    document.body.style.backgroundImage = 'none';
+  }
+}
+
+function renderBgButton() {
+  let wrapper = document.getElementById('bg-btn-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('span');
+    wrapper.id = 'bg-btn-wrapper';
+    wrapper.style.display = 'inline-flex';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.gap = '4px';
+    els.tabCount.insertAdjacentElement('afterend', wrapper);
+  }
+  wrapper.innerHTML = '';
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.style.display = 'none';
+  fileInput.onchange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      state.config.bgImage = reader.result;
+      await saveConfig(state.config);
+      applyBgImage();
+      renderBgButton();
+    };
+    reader.readAsDataURL(file);
+  };
+  wrapper.appendChild(fileInput);
+
+  const btn = document.createElement('button');
+  btn.id = 'btn-set-bg';
+  btn.className = 'btn-bg';
+  btn.title = '设置背景图';
+  btn.textContent = state.config.bgImage ? '🖼️ 更换背景' : '🖼️ 设置背景';
+  btn.onclick = () => fileInput.click();
+  wrapper.appendChild(btn);
+
+  if (state.config.bgImage) {
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'btn-bg';
+    clearBtn.title = '清除背景';
+    clearBtn.textContent = '✕';
+    clearBtn.onclick = async () => {
+      state.config.bgImage = '';
+      await saveConfig(state.config);
+      applyBgImage();
+      renderBgButton();
+    };
+    wrapper.appendChild(clearBtn);
+  }
 }
 
 async function refreshData() {
@@ -70,17 +177,21 @@ async function refreshData() {
 function render() {
   const filtered = filterTabs(state.tabs, state.searchQuery);
   const grouper = DIMENSION_MAP[state.dimension];
-  const groups = grouper(filtered, state.config.manualGroups, state.groups);
+  const groupsObj = grouper(filtered, state.config.manualGroups, state.groups);
+  const columns = toGroupColumns(groupsObj, state.dimension, state.config);
 
   setTabCount(els.tabCount, state.tabs.length);
   renderBatchBar();
-  renderGroups(els.content, groups, {
+  renderGroups(els.content, columns, {
     onActivate: handleActivate,
     onClose: handleClose,
     onPin: handlePin,
     onMute: handleMute,
     onSelect: handleSelect,
     onMoveToGroup: state.dimension === 'manual' ? handleMoveToGroup : null,
+    onReorder: handleReorder,
+    onPinToggle: handlePinToggle,
+    pinnedGroups: new Set(state.config.pinnedGroups[state.dimension] || []),
     selectedTabIds: state.selectedTabIds,
   });
 
@@ -217,6 +328,54 @@ async function handleMoveToGroup(groupName) {
   await refreshData();
 }
 
+async function handleReorder(draggedKey, targetColIndex, insertIndex) {
+  const dim = state.dimension;
+  const pinned = new Set(state.config.pinnedGroups[dim] || []);
+  if (pinned.has(draggedKey)) return;
+
+  const columns = state.config.groupColumns[dim];
+
+  for (let c = 0; c < 4; c++) {
+    const idx = columns[c].indexOf(draggedKey);
+    if (idx !== -1) {
+      columns[c].splice(idx, 1);
+      break;
+    }
+  }
+
+  const targetCol = columns[targetColIndex];
+  const pinnedCount = targetCol.filter((k) => pinned.has(k)).length;
+  const effectiveIndex = Math.max(insertIndex, pinnedCount);
+
+  targetCol.splice(effectiveIndex, 0, draggedKey);
+
+  await saveConfig(state.config);
+  render();
+}
+
+async function handlePinToggle(groupKey) {
+  const dim = state.dimension;
+  const pinned = new Set(state.config.pinnedGroups[dim] || []);
+  const columns = state.config.groupColumns[dim];
+
+  if (pinned.has(groupKey)) {
+    pinned.delete(groupKey);
+  } else {
+    pinned.add(groupKey);
+    for (let c = 0; c < 4; c++) {
+      const idx = columns[c].indexOf(groupKey);
+      if (idx !== -1) {
+        columns[c].splice(idx, 1);
+        columns[c].unshift(groupKey);
+        break;
+      }
+    }
+  }
+  state.config.pinnedGroups[dim] = Array.from(pinned);
+  await saveConfig(state.config);
+  render();
+}
+
 function updateGroupTabsUI() {
   for (const btn of els.groupTabs.querySelectorAll('button')) {
     btn.classList.toggle('active', btn.dataset.dimension === state.dimension);
@@ -226,7 +385,7 @@ function updateGroupTabsUI() {
 
 function renderQuickLinksBar() {
   renderQuickLinks(els.quickLinks, state.config.quickLinks, {
-    onClick: (url) => window.location.href = url,
+    onClick: (url) => openUrl(url),
     onAdd: async (name, url) => {
       state.config.quickLinks = addQuickLink(state.config.quickLinks, name, url);
       await saveConfig(state.config);

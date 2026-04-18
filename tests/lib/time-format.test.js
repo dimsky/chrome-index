@@ -1,4 +1,4 @@
-const { formatDuration } = require('../../src/lib/time-format');
+import { formatDuration } from '../../src/lib/time-format.js';
 
 describe('formatDuration', () => {
   test('returns "刚刚" for less than 1 minute', () => {

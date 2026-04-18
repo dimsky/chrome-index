@@ -3,7 +3,7 @@ const STORAGE_KEY = 'tabManagerData';
 export async function loadConfig() {
   return new Promise((resolve) => {
     chrome.storage.local.get([STORAGE_KEY], (result) => {
-      resolve(result[STORAGE_KEY] || { quickLinks: defaultQuickLinks(), manualGroups: [] });
+      resolve(result[STORAGE_KEY] || { quickLinks: defaultQuickLinks(), manualGroups: [], groupOrders: {}, groupColumns: {}, pinnedGroups: {}, bgImage: '' });
     });
   });
 }

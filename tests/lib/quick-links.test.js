@@ -1,9 +1,9 @@
-const {
+import {
   addQuickLink,
   removeQuickLink,
   reorderQuickLinks,
   isValidChromeUrl,
-} = require('../../src/lib/quick-links');
+} from '../../src/lib/quick-links.js';
 
 describe('isValidChromeUrl', () => {
   test('accepts chrome:// URLs', () => {

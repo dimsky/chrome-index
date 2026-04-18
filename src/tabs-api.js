@@ -37,6 +37,10 @@ export async function muteTab(tabId, muted) {
   return chrome.tabs.update(tabId, { muted });
 }
 
+export async function openUrl(url) {
+  return chrome.tabs.create({ url });
+}
+
 export function subscribeTabChanges(callback) {
   const events = [
     chrome.tabs.onCreated,
