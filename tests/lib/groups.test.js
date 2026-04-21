@@ -1,7 +1,6 @@
 import {
   groupByDomain,
   groupByWindow,
-  groupByTime,
   groupByNativeGroups,
   groupByManualGroups,
 } from '../../src/lib/groups.js';
@@ -35,23 +34,6 @@ describe('groupByWindow', () => {
     const tabs = [makeTab(1, 'https://a.com', 1), makeTab(2, 'https://b.com', 2)];
     const result = groupByWindow(tabs);
     expect(Object.keys(result)).toEqual(['窗口 1', '窗口 2']);
-  });
-});
-
-describe('groupByTime', () => {
-  test('categorizes by access time', () => {
-    const now = Date.now();
-    const tabs = [
-      makeTab(1, 'https://a.com', 1, -1, now - 30 * 60 * 1000),
-      makeTab(2, 'https://b.com', 1, -1, now - 3 * 60 * 60 * 1000),
-      makeTab(3, 'https://c.com', 1, -1, now - 30 * 60 * 60 * 1000),
-      makeTab(4, 'https://d.com', 1, -1, now - 72 * 60 * 60 * 1000),
-    ];
-    const result = groupByTime(tabs);
-    expect(result['刚刚']?.tabs.length || 0).toBe(1);
-    expect(result['今天']?.tabs.length || 0).toBe(1);
-    expect(result['昨天']?.tabs.length || 0).toBe(1);
-    expect(result['更早']?.tabs.length || 0).toBe(1);
   });
 });
 

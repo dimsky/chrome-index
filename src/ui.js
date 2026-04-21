@@ -1,4 +1,4 @@
-export function renderGroups(container, columns, { onActivate, onClose, onPin, onMute, onSelect, onMoveToGroup, onReorder, onPinToggle, pinnedGroups = new Set(), selectedTabIds = new Set() } = {}) {
+export function renderGroups(container, columns, { onActivate, onClose, onPin, onSelect, onMoveToGroup, onReorder, onPinToggle, pinnedGroups = new Set(), selectedTabIds = new Set(), currentTabId = null } = {}) {
   container.innerHTML = '';
 
   let draggedKey = null;
@@ -103,17 +103,17 @@ export function renderGroups(container, columns, { onActivate, onClose, onPin, o
         li.className = 'tab-item';
         if (tab.active) li.classList.add('active-tab');
         if (selectedTabIds.has(tab.id)) li.classList.add('selected');
+        if (tab.id === currentTabId) li.classList.add('current-newtab');
         li.dataset.tabId = tab.id;
 
         const pinBtn = `<button class="btn-pin" title="${tab.pinned ? '取消固定' : '固定'}">${tab.pinned ? '📌' : ' '}</button>`;
-        const muteBtn = `<button class="btn-mute" title="${tab.mutedInfo?.muted ? '取消静音' : '静音'}">${tab.mutedInfo?.muted ? '🔇' : '🔊'}</button>`;
 
         li.innerHTML = `
           <img class="tab-favicon" src="${tab.favIconUrl || ''}" alt="" onerror="this.style.visibility='hidden'">
           <span class="tab-title" title="${escapeHtml(tab.title)}">${escapeHtml(tab.title)}</span>
+          ${tab.id === currentTabId ? '<span class="tab-badge">本页</span>' : ''}
           ${pinBtn}
-          ${muteBtn}
-          <button class="btn-close" title="关闭">×</button>
+          ${tab.id !== currentTabId ? '<button class="btn-close" title="关闭">×</button>' : ''}
         `;
 
         li.addEventListener('click', (e) => {
@@ -122,22 +122,21 @@ export function renderGroups(container, columns, { onActivate, onClose, onPin, o
         });
 
         li.querySelector('.tab-title').addEventListener('click', () => onActivate?.(tab.id, tab.windowId));
-        li.querySelector('.btn-close').addEventListener('click', (e) => {
-          e.stopPropagation();
-          onClose?.([tab.id]);
-        });
+        const closeBtn = li.querySelector('.btn-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onClose?.([tab.id]);
+          });
+        }
         li.querySelector('.btn-pin').addEventListener('click', (e) => {
           e.stopPropagation();
           onPin?.(tab.id, !tab.pinned);
         });
-        li.querySelector('.btn-mute').addEventListener('click', (e) => {
-          e.stopPropagation();
-          onMute?.(tab.id, !tab.mutedInfo?.muted);
-        });
 
         let hoverTimer;
         li.addEventListener('mouseenter', () => {
-          hoverTimer = setTimeout(() => showTabTooltip(li, tab), 500);
+          hoverTimer = setTimeout(() => showTabTooltip(li, tab, currentTabId), 500);
         });
         li.addEventListener('mouseleave', () => {
           clearTimeout(hoverTimer);
@@ -197,7 +196,7 @@ function removeIndicator(column) {
   if (existing) existing.remove();
 }
 
-function showTabTooltip(targetEl, tab) {
+function showTabTooltip(targetEl, tab, currentTabId) {
   hideTabTooltip();
   const tooltip = document.createElement('div');
   tooltip.id = 'tab-tooltip';
@@ -214,6 +213,7 @@ function showTabTooltip(targetEl, tab) {
     <div class="tt-row">
       <span class="tt-url">${escapeHtml(tab.url || '')}</span>
     </div>
+    ${tab.id === currentTabId ? '<div class="tt-row"><span class="tt-meta" style="color:var(--accent);font-weight:600;">本页</span></div>' : ''}
     ${statusText ? `<div class="tt-row"><span class="tt-meta">${statusText}</span></div>` : ''}
   `;
   document.body.appendChild(tooltip);

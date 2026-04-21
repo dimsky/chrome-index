@@ -5,14 +5,14 @@ import {
   closeTab,
   closeTabs,
   pinTab,
-  muteTab,
   openUrl,
   subscribeTabChanges,
+  getCurrentTab,
+  muteAllTabs,
 } from './tabs-api.js';
 import {
   groupByDomain,
   groupByWindow,
-  groupByTime,
   groupByNativeGroups,
   groupByManualGroups,
 } from './lib/groups.js';
@@ -23,7 +23,6 @@ import { addQuickLink, removeQuickLink } from './lib/quick-links.js';
 const DIMENSION_MAP = {
   domain: groupByDomain,
   window: groupByWindow,
-  time: groupByTime,
   native: (tabs, _, nativeGroups) => groupByNativeGroups(tabs, nativeGroups),
   manual: (tabs, manualGroups) => groupByManualGroups(tabs, manualGroups),
 };
@@ -35,6 +34,7 @@ let state = {
   dimension: 'domain',
   searchQuery: '',
   selectedTabIds: new Set(),
+  currentTabId: null,
 };
 
 function toGroupColumns(groupsObj, dim, config) {
@@ -91,11 +91,14 @@ async function init() {
   state.config = await loadConfig();
   state.config.groupColumns = state.config.groupColumns || {};
   state.config.pinnedGroups = state.config.pinnedGroups || {};
+  const me = await getCurrentTab();
+  state.currentTabId = me?.id ?? null;
   applyBgImage();
   await refreshData();
   setupListeners();
   renderQuickLinksBar();
   renderBgButton();
+  renderMuteButton();
   setTimeout(() => {
     els.searchInput.focus();
     els.searchInput.select();
@@ -186,16 +189,17 @@ function render() {
     onActivate: handleActivate,
     onClose: handleClose,
     onPin: handlePin,
-    onMute: handleMute,
     onSelect: handleSelect,
     onMoveToGroup: state.dimension === 'manual' ? handleMoveToGroup : null,
     onReorder: handleReorder,
     onPinToggle: handlePinToggle,
     pinnedGroups: new Set(state.config.pinnedGroups[state.dimension] || []),
     selectedTabIds: state.selectedTabIds,
+    currentTabId: state.currentTabId,
   });
 
   updateGroupTabsUI();
+  updateMuteButton();
 }
 
 function filterTabs(tabs, query) {
@@ -215,6 +219,14 @@ function setupListeners() {
       state.searchQuery = e.target.value;
       render();
     }, 150);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      els.searchInput.focus();
+      els.searchInput.select();
+    }
   });
 
   els.groupTabs.addEventListener('click', (e) => {
@@ -257,8 +269,11 @@ async function handlePin(tabId, pinned) {
   await refreshData();
 }
 
-async function handleMute(tabId, muted) {
-  await muteTab(tabId, muted);
+async function handleMuteAll() {
+  const audibleTabs = state.tabs.filter((t) => t.id !== state.currentTabId && !t.mutedInfo?.muted);
+  const mutedTabs = state.tabs.filter((t) => t.id !== state.currentTabId && t.mutedInfo?.muted);
+  const targetMuted = audibleTabs.length > 0;
+  await muteAllTabs(targetMuted ? audibleTabs : mutedTabs, targetMuted);
   await refreshData();
 }
 
@@ -366,7 +381,8 @@ async function handlePinToggle(groupKey) {
       const idx = columns[c].indexOf(groupKey);
       if (idx !== -1) {
         columns[c].splice(idx, 1);
-        columns[c].unshift(groupKey);
+        const pinnedCount = columns[c].filter((k) => pinned.has(k)).length;
+        columns[c].splice(pinnedCount, 0, groupKey);
         break;
       }
     }
@@ -381,6 +397,31 @@ function updateGroupTabsUI() {
     btn.classList.toggle('active', btn.dataset.dimension === state.dimension);
   }
   manualGroupBtn.classList.toggle('hidden', state.dimension !== 'manual');
+}
+
+function renderMuteButton() {
+  let btn = document.getElementById('btn-mute-all');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'btn-mute-all';
+    btn.className = 'btn-bg';
+    btn.title = '一键静音/取消静音';
+    btn.onclick = handleMuteAll;
+    const wrapper = document.getElementById('bg-btn-wrapper');
+    if (wrapper) {
+      wrapper.insertAdjacentElement('beforebegin', btn);
+    } else {
+      els.tabCount.insertAdjacentElement('afterend', btn);
+    }
+  }
+}
+
+function updateMuteButton() {
+  const btn = document.getElementById('btn-mute-all');
+  if (!btn) return;
+  const audible = state.tabs.some((t) => t.id !== state.currentTabId && !t.mutedInfo?.muted);
+  btn.textContent = audible ? '🔊' : '🔇';
+  btn.title = audible ? '一键静音全部' : '取消静音全部';
 }
 
 function renderQuickLinksBar() {

@@ -177,7 +177,7 @@ body {
   text-overflow: ellipsis;
   font-size: 13px;
 }
-.tab-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
 .tab-item .btn-pin,
 .tab-item .btn-mute,
 .tab-item .btn-close {
@@ -191,7 +191,22 @@ body {
 }
 .tab-item .btn-close { font-size: 16px; line-height: 1; }
 .tab-item .btn-pin { min-width: 20px; }
-.tab-item .btn-mute { min-width: 20px; }
+.tab-item.current-newtab {
+  background: rgba(88, 166, 255, 0.08);
+  border-left: 3px solid var(--accent);
+}
+.tab-item.current-newtab:hover {
+  background: rgba(88, 166, 255, 0.15);
+}
+.tab-badge {
+  font-size: 10px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  font-weight: 600;
+}
 .ql-label { font-size: 12px; color: var(--muted); }
 .quick-link {
   font-size: 12px;

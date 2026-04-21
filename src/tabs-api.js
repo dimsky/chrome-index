@@ -37,6 +37,16 @@ export async function muteTab(tabId, muted) {
   return chrome.tabs.update(tabId, { muted });
 }
 
+export async function getCurrentTab() {
+  return new Promise((resolve) => {
+    chrome.tabs.getCurrent((tab) => resolve(tab || null));
+  });
+}
+
+export async function muteAllTabs(tabs, muted) {
+  await Promise.all(tabs.map((t) => chrome.tabs.update(t.id, { muted })));
+}
+
 export async function openUrl(url) {
   return chrome.tabs.create({ url });
 }

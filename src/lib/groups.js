@@ -36,31 +36,6 @@ function groupByWindow(tabs) {
   return groups;
 }
 
-function getTimeBucket(timestamp) {
-  if (!timestamp) return '未知时间';
-  const diff = Date.now() - timestamp;
-  const hours = diff / 3600000;
-  if (hours < 1) return '刚刚';
-  if (hours < 24) return '今天';
-  if (hours < 48) return '昨天';
-  return '更早';
-}
-
-function groupByTime(tabs) {
-  const order = ['刚刚', '今天', '昨天', '更早', '未知时间'];
-  const groups = {};
-  for (const tab of tabs) {
-    const key = getTimeBucket(tab.lastAccessedTime);
-    if (!groups[key]) groups[key] = { name: key, tabs: [] };
-    groups[key].tabs.push(tab);
-  }
-  const sorted = {};
-  for (const key of order) {
-    if (groups[key]) sorted[key] = groups[key];
-  }
-  return sorted;
-}
-
 function groupByNativeGroups(tabs, nativeGroups) {
   const map = {};
   for (const g of nativeGroups) map[g.id] = g;
@@ -101,7 +76,6 @@ function groupByManualGroups(tabs, manualGroups) {
 export {
   groupByDomain,
   groupByWindow,
-  groupByTime,
   groupByNativeGroups,
   groupByManualGroups,
 };
